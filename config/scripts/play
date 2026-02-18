@@ -1,0 +1,32 @@
+#!/bin/bash
+if [ $# -eq 0 ]; then
+    echo "Usage: $0 <search terms>"
+    exit 1
+fi
+
+SEARCH_TERM="$*"
+
+METADATA=$(yt-dlp "ytsearch:$SEARCH_TERM" -q --no-warnings --no-download --print-json | head -n 1)
+
+URL=$(echo "$METADATA" | jq -r '.webpage_url')
+TITLE=$(echo "$METADATA" | jq -r '.title // "N/A"')
+ARTIST=$(echo "$METADATA" | jq -r '.artist // "N/A"')
+ALBUM=$(echo "$METADATA" | jq -r '.album // "N/A"')
+DATE=$(echo "$METADATA" | jq -r '.upload_date // "N/A"')
+UPLOADER=$(echo "$METADATA" | jq -r '.uploader // "N/A"')
+CHANNEL_URL=$(echo "$METADATA" | jq -r '.channel_url // "N/A"')
+
+echo "Playing: $URL"
+
+mpv --no-video --cache=no "$URL" &
+MPV_PID=$!
+
+while true; do
+    read -p "" INPUT
+    if [[ "$INPUT" == "s" ]]; then
+        kill $MPV_PID 2>/dev/null
+        sleep 0.5
+        kill -9 $MPV_PID 2>/dev/null
+        break
+    fi
+done
